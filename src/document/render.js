@@ -1,8 +1,10 @@
-import { HTMLElement } from "node-html-parser";
+import { createElement } from "./elements.js";
+import { isComponent, isElement } from "./elements.js";
 
+// Populate root with page component
 export function renderToDom(root, page) {
-  if (!(root instanceof HTMLElement)) return console.error("Please provide a root");
-  if (!page || !(typeof page == "function" || page instanceof HTMLElement)) return console.error("Invalid parameter passed for page");
+  if (!isElement(root)) return console.error("Please provide a root");
+  if (!isComponent(page)) return console.error("Invalid parameter passed for page");
   const ele = (typeof page == "function") ? page() : page;
   root.innerHTML = "";
 
@@ -15,21 +17,24 @@ export function renderToDom(root, page) {
   }
 }
 
+// Hydrate the html to client side code
+//    - Add event listeners
+//    - Update elements that have dynamic attributes or children
 export function hydrateDom(root, page) {
-  if (!(root instanceof HTMLElement)) return console.error("Please provide a root");
-  if (!page || typeof page != "function" || !(page instanceof HTMLElement)) return console.error("Invalid parameter passed for page");
+  if (!isElement(root)) return console.error("Please provide a root");
+  if (!isComponent(page)) return console.error("Invalid parameter passed for page");
   const ele = (typeof page == "function") ? page() : page;
 }
 
 // Returns html as string
 export function renderToHTML(page) {
   if (typeof page == "function") page = page();
-  if (!(page instanceof HTMLElement)) return console.error("Page parameter not valid component");
+  if (!isComponent(page)) {
+    console.error("Invalid parameter passed for page");
+    return "";
+  }
 
-  const root = new HTMLElement("div", {
-    id: "app",
-    class: ""
-  });
+  const root = createElement("div");
   renderToDom(root, page);
   return root.innerHTML;
 }

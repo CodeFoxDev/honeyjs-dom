@@ -1,6 +1,7 @@
 import { createEffect } from "./signals.js";
 import { createElement, createTextNode } from "./document/elements.js";
-import { Node } from "node-html-parser";
+import { isComponent, isElement } from "./document/elements.js";
+import { isBrowser } from "./index.js";
 
 const parseCustom = ["key", "ref", "preserve"];
 const skipCustom = ["children"];
@@ -80,16 +81,32 @@ function property(prop) {
 
 /** @param {HTMLElement} element */
 function style(element, style) {
-  console.log(element);
   let res = {};
   for (const property in style) {
     let cssProp = property.replace(/[A-Z][a-z]*/g, str => '-' + str.toLowerCase() + '-')
       .replace('--', '-') // remove double hyphens
       .replace(/(^-)|(-$)/g, ''); // remove hyphens at the beginning and the end
-    if (typeof style[property] == "string" || typeof style[property] == "number") element.style[cssProp] = style[property];
-    else if (typeof style[property] == "function") createEffect(() => element.style[cssProp] = style[property]());
+    setStyle(element, cssProp, style[property]);
   }
   return res;
+}
+
+/**
+ * @param {HTMLElement} element
+ */
+function setStyle(element, name, value) {
+  if (!isElement(element)) return;
+  const t = typeof value;
+  const add = (key, val) => {
+    let curr = element.getAttribute("style") ?? "";
+    if (!curr.endsWith(";") && curr.length != 0) curr = curr + ";";
+    if (curr.length != 0) curr = curr + " ";
+    let keys = curr.split(";").map(e => e.split(":")[0]);
+    if (!keys.includes(key)) return element.setAttribute("style", `${curr}${key}: ${val};`);
+  }
+  if (t == "string") add(name, value);
+  else if (t == "boolean" || t == "number") add(name, value.toString());
+  else if (t == "function") createEffect(() => add(name, value()));
 }
 
 /**
@@ -99,13 +116,15 @@ function style(element, style) {
  * @param {Function} callback
  */
 function registerElementEventListener(element, event, callback) {
-  element.addEventListener(event, (e) => callback(e));
+  if (isBrowser) return element.addEventListener(event, (e) => callback(e));
+  element.setAttribute(`on:${event}`, "");
 }
 
 /** @param {HTMLElement} parent */
 function insertDynamic(parent, dynamic) {
   let current = null;
   createEffect(() => {
+    // TODO: Trigger event, that tells the js, that something has updated when this gets retriggered
     let child = dynamic();
     if (child == null || child == undefined) child = createPositionElement();
     current = handleChild(parent, child, current);
@@ -129,8 +148,8 @@ function handleChild(parent, child, current) {
   // Fragments and components
   if (Array.isArray(child)) return insertFragment(parent, child);
   else if (t == "function") return insertDynamic(parent, child);
-  else if (child instanceof Node) {
-    if (current && current instanceof Node) {
+  else if (isElement(child)) {
+    if (current && isElement(current)) {
       parent.replaceChild(child, current);
       return child;
     }
@@ -138,14 +157,14 @@ function handleChild(parent, child, current) {
   } else if (child == undefined) parent.removeChild(current);
   // Values
   if (t == "string") {
-    if (current && current instanceof Node) {
+    if (current && isElement(current)) {
       const val = createTextNode(child)
       parent.replaceChild(val, current);
       return val;
     }
     else return parent.appendChild(createTextNode(child));
   } else if (t == "number" || (t == "boolean" && t != false) || child instanceof Date || child instanceof RegExp) {
-    if (current && current instanceof Node) {
+    if (current && isElement(current)) {
       const val = createTextNode(child.toString());
       parent.replaceChild(val, current);
       return val;
@@ -159,8 +178,4 @@ function handleChild(parent, child, current) {
 function createPositionElement() {
   const pos = createElement("pos");
   return pos;
-}
-
-function setStyle(ele, style, value) {
-  // TODO: implement this to not throw errors on server side
 }
