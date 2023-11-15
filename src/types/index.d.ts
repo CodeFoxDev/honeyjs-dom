@@ -77,6 +77,10 @@ export function onMount(fn: Function): void;
  */
 export function onCleanup(fn: Function): void;
 
+export function renderToDom(root: HTMLElement, page: Component): void;
+export function hydrateDom(root: HTMLElement, page: Component): void;
+export function renderToHTML(page: Component): string;
+
 // External Types
 export type Color = string;
 export type Component = Function | HTMLElement;

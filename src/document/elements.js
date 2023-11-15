@@ -1,3 +1,5 @@
+import { HTMLElement, TextNode } from "node-html-parser";
+
 /*
   element {
     setAttribute,
@@ -6,14 +8,17 @@
   }
 */
 
-const isBrowser = typeof document !== undefined;
+const isBrowser = typeof document != "undefined";
 
 export function createElement(tag) {
-  if (!isBrowser) return; // Render to string?
-  return document.createElement(tag);
+  if (isBrowser) return document.createElement(tag);
+  return new HTMLElement(tag, {
+    class: "",
+    id: ""
+  });
 }
 
 export function createTextNode(data) {
-  if (!isBrowser) return; // Render to string?
-  return document.createTextNode(data);
+  if (isBrowser) return document.createTextNode(data);
+  return new TextNode(data);
 }

@@ -1,5 +1,6 @@
 import { createEffect } from "./signals.js";
 import { createElement, createTextNode } from "./document/elements.js";
+import { Node } from "node-html-parser";
 
 const parseCustom = ["key", "ref", "preserve"];
 const skipCustom = ["children"];
@@ -79,6 +80,7 @@ function property(prop) {
 
 /** @param {HTMLElement} element */
 function style(element, style) {
+  console.log(element);
   let res = {};
   for (const property in style) {
     let cssProp = property.replace(/[A-Z][a-z]*/g, str => '-' + str.toLowerCase() + '-')
@@ -157,4 +159,8 @@ function handleChild(parent, child, current) {
 function createPositionElement() {
   const pos = createElement("pos");
   return pos;
+}
+
+function setStyle(ele, style, value) {
+  // TODO: implement this to not throw errors on server side
 }
