@@ -1,0 +1,20 @@
+{
+  "name": "@honeyjs/dom",
+  "version": "0.2.4",
+  "description": "Simple JSX parser/handler for vite",
+  "author": "Codefoxdev",
+  "license": "MIT",
+  "type": "module",
+  "main": "./src/index.js",
+  "types": "./src/types/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./src/index.js",
+      "types": "./src/types/index.d.ts"
+    },
+    "./jsx-runtime": "./src/jsx-runtime.js"
+  },
+  "devDependencies": {
+    "vite": "^4.4.11"
+  }
+}
