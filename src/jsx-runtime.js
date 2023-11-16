@@ -1,7 +1,8 @@
 import { createEffect } from "./signals.js";
 import { createElement, createTextNode } from "./document/elements.js";
-import { isComponent, isElement } from "./document/elements.js";
+import { isElement } from "./document/elements.js";
 import { isBrowser } from "./index.js";
+import { attr_prefix, attr_STATICELEMENT, attr_STATICATTRIBUTES, attr_EVENTFULL } from "./document/values.js";
 
 const parseCustom = ["key", "ref", "preserve"];
 const skipCustom = ["children"];
@@ -15,15 +16,15 @@ const skipCustom = ["children"];
 export function h(tag, attrs, ...children) {
   let isFragment = tag.isFragment == true;
   const isCustom = (typeof tag == "function") && !isFragment;
-  const isElement = !isFragment && !isCustom;
-  let isStatic = true;
+  const isNormalElement = !isFragment && !isCustom;
+  let attrStatic = true;
 
   /** @type {HTMLElement | null} */
   let element = null;
   attrs ??= {};
   attrs.children = children;
 
-  if (isElement) element = createElement(tag);
+  if (isNormalElement) element = createElement(tag);
   else if (isCustom) element = tag(attrs);
   else if (isFragment) {
     const data = tag(attrs);
@@ -46,7 +47,7 @@ export function h(tag, attrs, ...children) {
           else if (typeof value == "object") value.current = element;
         }
         else if (typeof value == "function") createEffect(() => {
-          isStatic = false;
+          attrStatic = false;
           element.setAttribute(property(name), value())
         });
         else element.setAttribute(property(name), value);
@@ -55,10 +56,14 @@ export function h(tag, attrs, ...children) {
   }
 
   if (!isCustom) {
+    let childrenStatic = true;
     for (let i = 0; i < children.length; i++) {
       let child = children[i];
-      if (!isFragment && child != null) handleChild(element, child)
+      if (isFragment || child == null || !isElement(element)) continue;
+      if (!handleChild(element, child)) childrenStatic = false;
     }
+    if (isElement(element) && staticChildren(element) && childrenStatic) element.setAttribute(`${attr_prefix}:${attr_STATICELEMENT}`, true);
+    else if (isElement(element) && attrStatic) element.setAttribute(`${attr_prefix}:${attr_STATICATTRIBUTES}`, true)
   }
 
   return element;
@@ -114,6 +119,18 @@ function setStyle(element, name, value) {
 }
 
 /**
+ * @param {import("node-html-parser").HTMLElement} element
+ */
+function staticChildren(element) {
+  if (!element || !element.childNodes) return false;
+  if (Array.from(element.childNodes).length == 0) return true;
+  for (const e of Array.from(element.childNodes)) {
+    if (e.getAttribute && e.getAttribute(`${attr_prefix}:${attr_STATICELEMENT}`) == null) return false;
+  }
+  return true;
+}
+
+/**
  * Registers an event listener of type `event` to `element`
  * @param {HTMLElement} element
  * @param {string} event
@@ -121,33 +138,12 @@ function setStyle(element, name, value) {
  */
 function registerElementEventListener(element, event, callback) {
   if (isBrowser) return element.addEventListener(event, (e) => callback(e));
-  element.setAttribute(`on:${event}`, "");
-}
-
-/** @param {HTMLElement} parent */
-function insertDynamic(parent, dynamic) {
-  let current = null;
-  createEffect(() => {
-    // TODO: Trigger event, that tells the js, that something has updated when this gets retriggered
-    let child = dynamic();
-    if (child == null || child == undefined) child = createPositionElement();
-    current = handleChild(parent, child, current);
-  });
-  return parent;
-}
-
-/** @param {HTMLElement} parent */
-function insertFragment(parent, fragment) {
-  if (!Array.isArray(fragment)) return;
-  fragment.forEach(child => {
-    handleChild(parent, child);
-  });
-  return parent;
+  element.setAttribute(`${attr_prefix}:${attr_EVENTFULL}`, true);
 }
 
 /** @param {HTMLElement} parent */
 function handleChild(parent, child, current) {
-  if (child == null || child == null) return;
+  if (parent == null || child == null) return false;
   const t = typeof child;
   // Fragments and components
   if (Array.isArray(child)) return insertFragment(parent, child);
@@ -155,28 +151,51 @@ function handleChild(parent, child, current) {
   else if (isElement(child)) {
     if (current && isElement(current)) {
       parent.replaceChild(child, current);
-      return child;
+      return true;
     }
-    else return parent.appendChild(child);
+    else parent.appendChild(child);
   } else if (child == undefined) parent.removeChild(current);
   // Values
   if (t == "string") {
     if (current && isElement(current)) {
       const val = createTextNode(child)
       parent.replaceChild(val, current);
-      return val;
+      return true;
     }
-    else return parent.appendChild(createTextNode(child));
+    else parent.appendChild(createTextNode(child));
   } else if (t == "number" || (t == "boolean" && t != false) || child instanceof Date || child instanceof RegExp) {
     if (current && isElement(current)) {
       const val = createTextNode(child.toString());
       parent.replaceChild(val, current);
-      return val;
+      return true;
     }
-    else return parent.appendChild(createTextNode(child.toString()));
+    else parent.appendChild(createTextNode(child.toString()));
   } else if (t == "object") {
     // Handle this?
   }
+  return true;
+}
+
+/** @param {HTMLElement} parent */
+export function insertDynamic(parent, dynamic) {
+  let current = null;
+  createEffect(() => {
+    // TODO: Trigger event, that tells the js, that something has updated when this gets retriggered
+    let child = dynamic();
+    if (child == null || child == undefined) child = createPositionElement();
+    current = handleChild(parent, child, current);
+  });
+  return false;
+}
+
+/** @param {HTMLElement} parent */
+export function insertFragment(parent, fragment) {
+  if (!Array.isArray(fragment)) return false;
+  let isStatic = true;
+  fragment.forEach(child => {
+    if (handleChild(parent, child) == true) isStatic = false;
+  });
+  return isStatic;
 }
 
 function createPositionElement() {

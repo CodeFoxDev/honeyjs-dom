@@ -80,15 +80,17 @@ export function onCleanup(fn: Function): void;
 declare interface DomOptions {
   /**
    * Forcefully overwrites the dom if the received html is different from the received jsx
+   * @default false
    */
-  overwrite: boolean,
+  overwrite: boolean;
   /**
    * How strict the hydration should check for differences
    * 1 : Differences in text content and attribute values don't matter, however differnces in tags will
    * 2 : Children / text content and attributes should be identical
    * Use level 1 if you use variables like `isBrowser` to change content if it's server rendered or client rendered
+   * @default 1
    */
-  strictness: 1 | 2
+  strictness: 1 | 2;
 }
 
 /**
@@ -99,7 +101,11 @@ export function renderToDom(root: HTMLElement, page: Component): void;
 /**
  * Transforms the SSR html file to add all the event listeners and reactivity changes
  */
-export function hydrateDom(root: HTMLElement, page: Component, options: DomOptions): void;
+export function hydrateDom(
+  root: HTMLElement,
+  page: Component,
+  options: DomOptions
+): void;
 
 /**
  * Renders the component to a simple html string, reactive values will use the values at the given time

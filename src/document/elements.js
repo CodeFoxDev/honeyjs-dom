@@ -22,4 +22,4 @@ export function isComponent(element) {
 export function isElement(element) {
   if (element instanceof _parser_Node || (typeof Node != "undefined" && element instanceof Node)) return true;
   return false;
-} 
+}
