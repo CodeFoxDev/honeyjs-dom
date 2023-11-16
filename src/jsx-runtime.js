@@ -16,6 +16,7 @@ export function h(tag, attrs, ...children) {
   let isFragment = tag.isFragment == true;
   const isCustom = (typeof tag == "function") && !isFragment;
   const isElement = !isFragment && !isCustom;
+  let isStatic = true;
 
   /** @type {HTMLElement | null} */
   let element = null;
@@ -44,7 +45,10 @@ export function h(tag, attrs, ...children) {
           if (typeof value == "function") value(element);
           else if (typeof value == "object") value.current = element;
         }
-        else if (typeof value == "function") createEffect(() => element.setAttribute(property(name), value()));
+        else if (typeof value == "function") createEffect(() => {
+          isStatic = false;
+          element.setAttribute(property(name), value())
+        });
         else element.setAttribute(property(name), value);
       }
     }

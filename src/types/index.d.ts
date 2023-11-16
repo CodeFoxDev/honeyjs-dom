@@ -73,13 +73,41 @@ export function createRef(): () => Component;
 export function onMount(fn: Function): void;
 
 /**
- * Fires when the app is unloaded, usefull for cleaning up effect
+ * Fires when the app is unloaded, usefull for cleaning up effects
  */
 export function onCleanup(fn: Function): void;
 
+declare interface DomOptions {
+  /**
+   * Forcefully overwrites the dom if the received html is different from the received jsx
+   */
+  overwrite: boolean,
+  /**
+   * How strict the hydration should check for differences
+   * 1 : Differences in text content and attribute values don't matter, however differnces in tags will
+   * 2 : Children / text content and attributes should be identical
+   * Use level 1 if you use variables like `isBrowser` to change content if it's server rendered or client rendered
+   */
+  strictness: 1 | 2
+}
+
+/**
+ * Renders the component to the provided `root` this will account for state changes and event listeners
+ */
 export function renderToDom(root: HTMLElement, page: Component): void;
-export function hydrateDom(root: HTMLElement, page: Component): void;
+
+/**
+ * Transforms the SSR html file to add all the event listeners and reactivity changes
+ */
+export function hydrateDom(root: HTMLElement, page: Component, options: DomOptions): void;
+
+/**
+ * Renders the component to a simple html string, reactive values will use the values at the given time
+ * This is used for SSR to generate the html file in the server
+ */
 export function renderToHTML(page: Component): string;
+
+export const isBrowser: Boolean;
 
 // External Types
 export type Color = string;

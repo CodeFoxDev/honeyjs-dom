@@ -1,18 +1,6 @@
 import { HTMLElement, TextNode, Node as _parser_Node } from "node-html-parser";
 import { isBrowser } from "../index.js";
 
-/*
-  element {
-    setAttribute,
-    style,
-    addEventListener
-
-    appendChild,
-    removeChild,
-    replaceChild
-  }
-*/
-
 export function createElement(tag) {
   if (isBrowser) return document.createElement(tag);
   return new HTMLElement(tag, {
