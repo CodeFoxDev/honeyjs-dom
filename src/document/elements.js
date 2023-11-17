@@ -23,7 +23,7 @@ export function isComponent(element) {
 
 /** @param {import("node-html-parser").HTMLElement} element */
 export function isElement(element) {
-  if (element instanceof _parser_Node || (typeof Node != "undefined" && element instanceof Node)) return true;
+  if ((element instanceof _parser_Node || (typeof Node != "undefined" && element instanceof Node)) && element.nodeType == 1) return true;
   return false;
 }
 

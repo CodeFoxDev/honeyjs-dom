@@ -1,4 +1,5 @@
 import { createElement } from "./elements.js";
+import { render } from "../runtime/modes.js";
 import { isComponent, isElement, isStatic, isStaticAttr } from "./elements.js";
 import { attr_prefix, attr_STATICELEMENT, attr_STATICATTRIBUTES } from "./values.js";
 
@@ -8,7 +9,7 @@ import { attr_prefix, attr_STATICELEMENT, attr_STATICATTRIBUTES } from "./values
 export function renderToDom(root, page) {
   if (!isElement(root)) return console.error("Please provide a root");
   if (!isComponent(page)) return console.error("Invalid parameter passed for page");
-  const ele = (typeof page == "function") ? page() : page;
+  const ele = render(page, { mode: "CSR" });
   root.innerHTML = "";
 
   if (Array.isArray(ele)) {
@@ -16,7 +17,7 @@ export function renderToDom(root, page) {
       root.appendChild(child);
     })
   } else {
-    root.appendChild(contents);
+    root.appendChild(ele);
   }
 }
 
@@ -30,11 +31,11 @@ export function hydrateDom(root, page, options) {
 
   if (!isElement(root)) return console.error("Please provide a root");
   if (!isComponent(page)) return console.error("Invalid parameter passed for page");
-  const ele = [(typeof page == "function") ? page() : page].flat(Infinity);
+  const ele = [render(page, { mode: "Hydration", root: root })].flat(Infinity);
   const body = Array.from(root.children);
   if (ele.length != body.length) return handleInvalidHydration(root, page, options);
 
-  replaceElements(body, ele, options);
+  //replaceElements(body, ele, options);
 }
 
 /** @type {import("../types").hydrateDom} */
@@ -107,7 +108,11 @@ function replaceElements(root, page, options) {
     for (let i = 0; i < root.length; i++) if (replaceElements(root[i], page[i], options) == false) return false;
     return true;
   }
+  if (!isElement(root)) return true;
   if (isStatic(root)) return true;
+  for (let i = 0; i < Array.from(root.childNodes).length; i++) {
+    replaceElements(Array.from(root.childNodes)[i], Array.from(page.childNodes)[i], options);
+  }
   console.log(root, page);
 }
 
@@ -130,7 +135,7 @@ function parseAttributes(attributes) {
 
 /** @type {import("../types").renderToHTML} */
 export function renderToHTML(page) {
-  if (typeof page == "function") page = page();
+  page = render(page, { mode: "SSR" });
   if (!isComponent(page)) {
     console.error("Invalid parameter passed for page");
     return "";
