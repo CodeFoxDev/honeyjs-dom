@@ -1,5 +1,5 @@
 import { createElement } from "./elements.js";
-import { isComponent, isElement } from "./elements.js";
+import { isComponent, isElement, isStatic, isStaticAttr } from "./elements.js";
 import { attr_prefix, attr_STATICELEMENT, attr_STATICATTRIBUTES } from "./values.js";
 
 // Populate root with page component
@@ -107,6 +107,7 @@ function replaceElements(root, page, options) {
     for (let i = 0; i < root.length; i++) if (replaceElements(root[i], page[i], options) == false) return false;
     return true;
   }
+  if (isStatic(root)) return true;
   console.log(root, page);
 }
 

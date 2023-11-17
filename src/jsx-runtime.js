@@ -63,7 +63,7 @@ export function h(tag, attrs, ...children) {
       if (!handleChild(element, child)) childrenStatic = false;
     }
     if (isElement(element) && staticChildren(element) && childrenStatic) element.setAttribute(`${attr_prefix}:${attr_STATICELEMENT}`, true);
-    else if (isElement(element) && attrStatic) element.setAttribute(`${attr_prefix}:${attr_STATICATTRIBUTES}`, true)
+    else if (isElement(element) && attrStatic/*  && !element.getAttribute(`${attr_prefix}:${attr_EVENTFULL}`) */) element.setAttribute(`${attr_prefix}:${attr_STATICATTRIBUTES}`, true)
   }
 
   return element;
