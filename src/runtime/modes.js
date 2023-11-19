@@ -4,6 +4,7 @@
  * @typedef {import("node-html-parser").TextNode} N.TextNode
  */
 
+/** @type {"SSR" | "CSR" | "Hydration"} */
 export let renderingMode = "CSR";
 export let hydrationRefernceElement = null;
 
@@ -25,6 +26,7 @@ export function render(component, o) {
   const before = performance.now();
 
   component = component();
+  console.log(component);
 
   console.log(`rendering took: ${performance.now() - before} ms`);
 

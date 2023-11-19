@@ -1,3 +1,5 @@
+import * as N from "node-html-parser";
+
 declare interface App {
   /**
    * Should be called on the initial page load, and renders the app to the specified root.
@@ -96,13 +98,13 @@ declare interface DomOptions {
 /**
  * Renders the component to the provided `root` this will account for state changes and event listeners
  */
-export function renderToDom(root: HTMLElement, page: Component): void;
+export function renderToDom(root: N.HTMLElement, page: Component): void;
 
 /**
  * Transforms the SSR html file to add all the event listeners and reactivity changes
  */
 export function hydrateDom(
-  root: HTMLElement,
+  root: N.HTMLElement,
   page: Component,
   options: DomOptions
 ): void;

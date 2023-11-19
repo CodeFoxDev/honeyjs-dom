@@ -57,46 +57,6 @@ function staticChildren(element) {
 }
 
 /**
- * @param {N.HTMLElement} parent 
- * @param {N.HTMLElement} child 
- * @param {N.HTMLElement} current 
- * @returns {boolean}
- */
-export function handleChild(parent, child, current) {
-  if (parent == null || child == null) return false;
-  const t = typeof child;
-  // Fragments and components
-  if (Array.isArray(child)) return insertFragment(parent, child);
-  else if (t == "function") return insertDynamic(parent, child);
-  else if (isElement(child)) {
-    if (current && isElement(current)) {
-      parent.replaceChild(child, current);
-      return true;
-    }
-    else parent.appendChild(child);
-  } else if (child == undefined) parent.removeChild(current);
-  // Values
-  if (t == "string") {
-    if (current && isElement(current)) {
-      const val = createTextNode(child)
-      parent.replaceChild(val, current);
-      return true;
-    }
-    else parent.appendChild(createTextNode(child));
-  } else if (t == "number" || (t == "boolean" && t != false) || child instanceof Date || child instanceof RegExp) {
-    if (current && isElement(current)) {
-      const val = createTextNode(child.toString());
-      parent.replaceChild(val, current);
-      return true;
-    }
-    else parent.appendChild(createTextNode(child.toString()));
-  } else if (t == "object") {
-    // Handle this?
-  }
-  return true;
-}
-
-/**
  * @param {HTMLElement} parent
  * @param {Function} dynamic
  */
