@@ -73,3 +73,8 @@ export function renderToHTML(page) {
   renderToDom(root, page);
   return root.innerHTML;
 }
+
+export function renderToTree(page) {
+  const tree = render(page, { mode: "Tree" });
+  return tree;
+}

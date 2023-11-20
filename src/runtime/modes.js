@@ -4,14 +4,16 @@
  * @typedef {import("node-html-parser").TextNode} N.TextNode
  */
 
-/** @type {"SSR" | "CSR" | "Hydration"} */
+import { isBrowser } from "..";
+
+/** @type {"SSR" | "CSR" | "Hydration" | "Tree"} */
 export let renderingMode = "CSR";
 export let hydrationRefernceElement = null;
 
 /**
  * @param {Function} component
  * @param {object} o
- * @param {"SSR" | "CSR" | "Hydration"} o.mode
+ * @param {"SSR" | "CSR" | "Hydration" | "Tree"} o.mode
  * @param {N.HTMLElement} o.root
  */
 export function render(component, o) {
@@ -26,7 +28,7 @@ export function render(component, o) {
   const before = performance.now();
 
   component = component();
-  console.log(component);
+  if (isBrowser) console.log(component);
 
   console.log(`rendering took: ${performance.now() - before} ms`);
 

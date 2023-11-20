@@ -115,6 +115,11 @@ export function hydrateDom(
  */
 export function renderToHTML(page: Component): string;
 
+/**
+ * Renders the component to a simple element tree
+ */
+export function renderToTree(page: Component): object;
+
 export const isBrowser: Boolean;
 
 // External Types
