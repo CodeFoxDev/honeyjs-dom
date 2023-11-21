@@ -21,6 +21,7 @@ export function createSignal(value, options) {
 
   const write = (nextValue) => {
     if (value === nextValue && options.equals == true) return value;
+    if (typeof nextValue == "function") nextValue = nextValue(value);
     let prev = value;
     value = nextValue;
     for (const sub of [...subscriptions]) sub.execute(prev);

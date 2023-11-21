@@ -36,10 +36,11 @@ declare interface EventData {
 
 /**
  * Creates a signal with `value`
+ * The set function also accepts a function with first param being the current value and returns the new value
  * @param value The initial value that the signal has
  */
-export function createSignal(
-  value: any,
+export function createSignal<T>(
+  value: T,
   options?: {
     /**
      * Whether or not to rerun the effects when the setter value is the same as the previous value.
@@ -48,7 +49,7 @@ export function createSignal(
      */
     equals: boolean;
   }
-): [get: () => any, set: (value: any) => any];
+): [get: () => T, set: (value: T) => T];
 
 /**
  * Creates an effect that runs when a signal used in the effect function changes

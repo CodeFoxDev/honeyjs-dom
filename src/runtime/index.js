@@ -3,8 +3,6 @@
  * @typedef {import("node-html-parser").HTMLElement} N.HTMLElement
  * @typedef {import("node-html-parser").TextNode} N.TextNode
  */
-import { parseAttributes } from "./attributes.js";
-import { parseChildren } from "./children.js";
 import { createElement, createTextNode, isElement, isTextElement } from "../document/elements.js";
 import { renderingMode } from "./modes.js";
 import { createEffect, isBrowser } from "../index.js";
