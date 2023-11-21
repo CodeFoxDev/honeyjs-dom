@@ -4,7 +4,8 @@
  * @typedef {import("node-html-parser").TextNode} N.TextNode
  */
 
-import { isBrowser } from "..";
+import { createEffect, isBrowser } from "..";
+import { apply, insert } from ".";
 
 /** @type {"SSR" | "CSR" | "Hydration" | "Tree"} */
 export let renderingMode = "CSR";
@@ -27,13 +28,32 @@ export function render(component, o) {
 
   const before = performance.now();
 
-  component = component();
-  if (isBrowser) console.log(component);
+  const page = component();
+  if (o.mode == "Hydration") attach(o.root, page, o);
 
-  console.log(`rendering took: ${performance.now() - before} ms`);
+  console.log(`${o.mode == "Hydration" ? "Hydration" : "Rendering"} took: ${performance.now() - before} ms`);
 
   // Reset to default
   renderingMode = prevMode;
   hydrationRefernceElement = null;
-  return component;
+  return page;
+}
+
+/**
+ * @param {HTMLElement} root 
+ * @param {object} page 
+ * @param {object} options 
+ */
+export function attach(root, page, options) {
+  const children = Array.from(root.childNodes);
+  for (let i = 0; i < children.length; i++) {
+    const child = children[i];
+    const item = (typeof page == "function") ? page : (Array.isArray(page) ? page[i] : page.children[i]);
+    const t = typeof item;
+    if (t == "function") insert(root, item(), child);
+    else apply(child, item.attrs, item.type);
+
+    //console.log(item);
+    attach(child, item, options);
+  }
 }

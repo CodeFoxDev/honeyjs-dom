@@ -12,13 +12,8 @@ export function renderToDom(root, page) {
   const ele = render(page, { mode: "CSR" });
   root.innerHTML = "";
 
-  if (Array.isArray(ele)) {
-    ele.flat(Infinity).forEach(child => {
-      root.appendChild(child);
-    })
-  } else {
-    root.appendChild(ele);
-  }
+  if (Array.isArray(ele)) ele.flat(Infinity).forEach(c => root.appendChild(c));
+  else root.appendChild(ele);
 }
 
 // Hydrate the html to client side code
@@ -51,26 +46,18 @@ function loadDefaults(options) {
   options.strictness ??= 1;
 }
 
-// Helper functions
-function parseAttributes(attributes) {
-  const arr = Array.from(attributes);
-  const res = {};
-  arr.forEach(e => res[e.name] = e.value);
-  return res;
-}
-
 // Returns html as string
 
 /** @type {import("../types").renderToHTML} */
 export function renderToHTML(page) {
-  page = render(page, { mode: "SSR" });
-  if (!isComponent(page)) {
+  const comp = render(page, { mode: "SSR" });
+  if (!isComponent(comp)) {
     console.error("Invalid parameter passed for page");
     return "";
   }
 
   const root = createElement("div");
-  renderToDom(root, page);
+  renderToDom(root, comp);
   return root.innerHTML;
 }
 

@@ -5,7 +5,7 @@
  */
 import { parseAttributes } from "./attributes.js";
 import { parseChildren } from "./children.js";
-import { createElement, createTextNode, isElement } from "../document/elements.js";
+import { createElement, createTextNode, isElement, isTextElement } from "../document/elements.js";
 import { renderingMode } from "./modes.js";
 import { createEffect, isBrowser } from "../index.js";
 
@@ -25,7 +25,11 @@ export function h(tag, attrs, ...children) {
   attrs ??= {};
 
   if (type == "element") element = createElement(tag);
-  else if (type == "custom") element = tag({ ...attrs, children });
+  else if (type == "custom") {
+    element = tag({ ...attrs, children });
+    children = ([element]).flat(Infinity);
+    if (renderingMode == "Hydration") ({ type, tag, attrs, children } = element);
+  }
   else if (type == "fragment") element = children = tag({ ...attrs, children }).children;
 
   if (Array.isArray(element)) {
@@ -35,7 +39,7 @@ export function h(tag, attrs, ...children) {
   if (children) children = children.flat(Infinity);
   if (renderingMode == "Hydration" || renderingMode == "Tree") {
     if (type == "fragment") return children;
-    else return { type, tag, attrs, children }
+    else return { tag, attrs, children }
   }
 
   if (type != "fragment") apply(element, attrs, type);
@@ -63,7 +67,6 @@ export function insert(parent, child, current) {
   // Fragments and components
   if (Array.isArray(child)) child.map(_child => insert(parent, _child));
   else if (t == "function") {
-    let current = null;
     createEffect(() => {
       let _child = child();
       if (_child == null || _child == undefined) _child = createElement("temp");
@@ -76,7 +79,7 @@ export function insert(parent, child, current) {
   } else if (child == undefined) parent.removeChild(current);
   // Values
   if (t == "string") {
-    if (current && isElement(current) && isBrowser) {
+    if (current && isTextElement(current) && isBrowser) {
       const val = createTextNode(child)
       return parent.replaceChild(val, current);
     }
@@ -100,12 +103,19 @@ export function apply(element, attrs, type) {
     const keyType = key.toLowerCase().startsWith("on") ? "event" : "prop";
     if (keyType == "event") {
       const event = key.toLowerCase().replace("on", "");
-      // add event listener
+      if (isBrowser) element.addEventListener(event, val);
     } else {
       const t = typeof val;
       const prop = key.toLowerCase() == "classname" ? "class" : key.toLowerCase();
 
-      if (key == "style" && t == "object") { }// apply stule
+      if (key == "style" && t == "object") {
+        for (const property in val) {
+          let cssProp = property.replace(/[A-Z][a-z]*/g, str => '-' + str.toLowerCase() + '-')
+            .replace('--', '-') // remove double hyphens
+            .replace(/(^-)|(-$)/g, ''); // remove hyphens at the beginning and the end
+          applyStyle(element, cssProp, val[property]);
+        }
+      }
       // Refs
       else if (key == "ref" && t == "function") val(element);
       else if (key == "ref" && t == "object") val.current = element;
@@ -117,4 +127,19 @@ export function apply(element, attrs, type) {
       else element.setAttribute(prop, val);
     }
   }
+}
+
+function applyStyle(element, name, value) {
+  if (!isElement(element)) return;
+  const t = typeof value;
+  const add = (key, val) => {
+    let curr = element.getAttribute("style") ?? "";
+    if (!curr.endsWith(";") && curr.length != 0) curr = curr + ";";
+    if (curr.length != 0) curr = curr + " ";
+    let keys = curr.split(";").map(e => e.split(":")[0]);
+    if (!keys.includes(key)) return element.setAttribute("style", `${curr}${key}: ${val};`);
+  }
+  if (t == "string") add(name, value);
+  else if (t == "boolean" || t == "number") add(name, value.toString());
+  else if (t == "function") createEffect(() => add(name, value()));
 }
