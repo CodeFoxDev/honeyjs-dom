@@ -4,8 +4,7 @@
  * @typedef {import("node-html-parser").TextNode} N.TextNode
  */
 
-import { createEffect, isBrowser } from "..";
-import { apply, insert } from ".";
+import { apply, insert } from "./index.js";
 
 /** @type {"SSR" | "CSR" | "Hydration" | "Tree"} */
 export let renderingMode = "CSR";
