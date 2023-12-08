@@ -1,6 +1,6 @@
 {
   "name": "@honeyjs/dom",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "Simple JSX parser/handler for vite",
   "author": "Codefoxdev",
   "license": "MIT",
